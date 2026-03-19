@@ -1,0 +1,2 @@
+python client_export.py
+pause
