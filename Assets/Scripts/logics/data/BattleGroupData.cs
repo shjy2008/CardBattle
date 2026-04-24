@@ -286,14 +286,14 @@ namespace Assets.Scripts.logics
 
         public int GetAmountBeforeLoss(string id)
         {
-            if (!units.ContainsKey(id)) return 0;
-            return units[id];
+            return units.TryGetValue(id, out var amount) ? amount : 0;
         }
 
         public int GetAmountAfterLoss(string id)
         {
-            if (!units.ContainsKey(id)) return 0;
-            return units[id] - incomingLossDict[id];
+            if (!units.TryGetValue(id, out var amount)) return 0;
+            incomingLossDict.TryGetValue(id, out var incomingLoss);
+            return amount - incomingLoss;
         }
 
         public int GetTotalAmountAfterLoss()

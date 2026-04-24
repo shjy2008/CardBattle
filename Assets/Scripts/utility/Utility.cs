@@ -206,6 +206,12 @@ namespace Assets.Scripts.utility
 
     public static class Utils
     {
+        private static readonly Dictionary<Tuple<Type, object, Type>, Attribute> enumAttrCache =
+            new Dictionary<Tuple<Type, object, Type>, Attribute>();
+        private static readonly HashSet<Tuple<Type, object, Type>> enumAttrMissCache =
+            new HashSet<Tuple<Type, object, Type>>();
+        private static readonly object enumAttrCacheLock = new object();
+
         public static Dictionary<Renderer, int> GetChildrenRendererToSortingOrder(Transform transform)
         {
             Dictionary<Renderer, int> ret = new Dictionary<Renderer, int>();
@@ -307,9 +313,40 @@ namespace Assets.Scripts.utility
             where AttrType : Attribute
             where EnumType : Enum
         {
-            FieldInfo fieldInfo = input.GetType().GetField(input.ToString());
-            var result = fieldInfo.GetCustomAttribute(typeof(AttrType));
-            return result as AttrType;
+            var enumType = typeof(EnumType);
+            var attrType = typeof(AttrType);
+            var cacheKey = Tuple.Create(enumType, (object)input, attrType);
+
+            lock (enumAttrCacheLock)
+            {
+                if (enumAttrCache.TryGetValue(cacheKey, out var cachedAttr))
+                {
+                    return cachedAttr as AttrType;
+                }
+
+                if (enumAttrMissCache.Contains(cacheKey))
+                {
+                    return null;
+                }
+            }
+
+            // Reflection is expensive; do it only once per enum value + attribute type.
+            FieldInfo fieldInfo = enumType.GetField(input.ToString());
+            AttrType result = fieldInfo != null ? fieldInfo.GetCustomAttribute<AttrType>() : null;
+
+            lock (enumAttrCacheLock)
+            {
+                if (result != null)
+                {
+                    enumAttrCache[cacheKey] = result;
+                }
+                else
+                {
+                    enumAttrMissCache.Add(cacheKey);
+                }
+            }
+
+            return result;
         }
 
         public static bool HasAttribute<AttrType, EnumType>(EnumType input)
