@@ -42,6 +42,9 @@ public class BattleFieldComponent : UIComponent
     // cache the distant project VFX hit point(end pos) for later use
     private Dictionary<int, List<Vector3>> siegeAttackHitPosDict;
 
+    private List<GameObject> effectPlayerKeyBuffer;
+    private List<GameObject> inactiveEffectPlayerBuffer;
+
     public BattleFieldComponent(GameObject _root)
     {
         root = _root;
@@ -68,6 +71,8 @@ public class BattleFieldComponent : UIComponent
         vfxsRoot.transform.localScale = Vector3.one * UIScale; // just make it equivalent to a point at origin without parent.
 
         effectPlayerObjDict = new Dictionary<GameObject, float>();
+        effectPlayerKeyBuffer = new List<GameObject>();
+        inactiveEffectPlayerBuffer = new List<GameObject>();
         fadeGroupTransList = new List<Transform>();
 
         totalAtkArrowParamDict = new Dictionary<int, HashSet<Tuple<GroupSide, GroupSide, AttackedDir>>>();
@@ -884,13 +889,25 @@ public class BattleFieldComponent : UIComponent
 
     private void UpdateEffectPlayers()
     {
-        var allEPGameObjs = effectPlayerObjDict.Keys.ToList();
-        foreach (var epGameObj in allEPGameObjs)
+        effectPlayerKeyBuffer.Clear();
+        inactiveEffectPlayerBuffer.Clear();
+
+        foreach (var epGameObj in effectPlayerObjDict.Keys)
+            effectPlayerKeyBuffer.Add(epGameObj);
+
+        for (int i = 0; i < effectPlayerKeyBuffer.Count; i++)
         {
+            var epGameObj = effectPlayerKeyBuffer[i];
             var oldRemainTime = effectPlayerObjDict[epGameObj];
-            effectPlayerObjDict[epGameObj] -= Time.deltaTime;
-            if (oldRemainTime > 0 && effectPlayerObjDict[epGameObj] <= 0) epGameObj.SetActive(false);
+            var newRemainTime = oldRemainTime - Time.deltaTime;
+            effectPlayerObjDict[epGameObj] = newRemainTime;
+
+            if (oldRemainTime > 0 && newRemainTime <= 0)
+                inactiveEffectPlayerBuffer.Add(epGameObj);
         }
+
+        for (int i = 0; i < inactiveEffectPlayerBuffer.Count; i++)
+            inactiveEffectPlayerBuffer[i].SetActive(false);
     }
 
     public static int GetEffectPlayerMaxNum()
