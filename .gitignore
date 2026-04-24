@@ -1,0 +1,29 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Auto-generated project/solution files
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+
+# IDE folders
+.vs/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Build outputs
+[Bb]uild/
+[Bb]uilds/
+
+# Asset ignore everything except Script/
+!Assets/Scripts/
+Assets/*
